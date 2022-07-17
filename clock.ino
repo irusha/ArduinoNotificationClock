@@ -73,6 +73,7 @@ String str = "";
 int backlightMode = 0;
 bool isRanOnce = true;
 DS3231 clock;
+String daysOfWeek[7] = {"Sunday    ", "Monday    ", "Tuesday   ", "Wednesday ", "Thursday  ", "Friday    ", "Saturday  "};
 
 bool h12Flag;
 bool pmFlag;
@@ -132,11 +133,11 @@ void loop()
   if (Serial.available() > 0)
   {
     str = Serial.readStringUntil('\n');
-    currMillis = millis();
-    isRanOnce = false;
 
     if (str.charAt(0) == '#')
     {
+      currMillis = millis();
+      isRanOnce = false;
 
       if (str.charAt(1) == 'a')
       {
@@ -149,21 +150,23 @@ void loop()
       if (str.charAt(1) == 'd')
       {
         String number = str.substring(2);
-        if (number.length() == 10)
+        if (number.length() == 11)
         {
           int year = number.substring(0, 2).toInt();
           int month = number.substring(2, 4).toInt();
           int date = number.substring(4, 6).toInt();
-          int hour = number.substring(6, 8).toInt();
-          int minute = number.substring(8, 10).toInt();
+          int doW = number.substring(6, 7).toInt();
+          int hour = number.substring(7, 9).toInt();
+          int minute = number.substring(9).toInt();
           clock.setYear(year);
           clock.setMonth(month);
           clock.setDate(date);
           clock.setHour(hour);
           clock.setMinute(minute);
+          clock.setDoW(doW);
           lcd.clear();
           lcd.print("Time set to:");
-          lcd.setCursor(0,1);
+          lcd.setCursor(0, 1);
           lcd.print(numberFormatter(hour));
           lcd.print(":");
           lcd.print(numberFormatter(minute));
@@ -174,7 +177,6 @@ void loop()
           lcd.print("/");
           lcd.print("20" + numberFormatter(year));
           lcd.print(" ");
-
         }
       }
       if (str.charAt(1) == 'c')
@@ -194,9 +196,14 @@ void loop()
     }
     else
     {
-      currentNotification = str;
-      timeDisplay();
-      defaultLcd();
+      if (!(str == "" && currentNotification == ""))
+      {
+        currentNotification = str;
+        currMillis = millis();
+        isRanOnce = false;
+        timeDisplay();
+        defaultLcd();
+      }
     }
   }
 }
@@ -276,7 +283,7 @@ void defaultLcd()
     if (isLightOn)
     {
       lcd.setCursor(0, 1);
-      lcd.print("          ");
+      lcd.print(daysOfWeek[clock.getDoW() - 1]);
       lcd.setCursor(10, 1);
       lcd.write(4);
       if (digitalRead(btpin) == HIGH)
@@ -298,7 +305,7 @@ void defaultLcd()
     {
 
       lcd.setCursor(0, 1);
-      lcd.print("          ");
+      lcd.print(daysOfWeek[clock.getDoW() - 1]);
       lcd.setCursor(10, 1);
       lcd.write(4);
       if (digitalRead(btpin) == HIGH)
@@ -327,10 +334,11 @@ void defaultLcd()
         printString += " ";
       }
     }
-    else{
-      printString = currentNotification.substring(0,16);
+    else
+    {
+      printString = currentNotification.substring(0, 16);
     }
-      lcd.print(printString);
+    lcd.print(printString);
   }
 }
 
