@@ -128,13 +128,14 @@ void loop()
       digitalWrite(9, LOW);
     }
     timeDisplay();
+    defaultLcd();
   }
 
   if (Serial.available() > 0)
   {
     str = Serial.readStringUntil('\n');
 
-    if (str.charAt(0) == '#')
+    if (str.charAt(0) == '`')
     {
       currMillis = millis();
       isRanOnce = false;
@@ -146,6 +147,14 @@ void loop()
       if (str.charAt(1) == 'b')
       {
         backLightModeChanger();
+      }
+      if (str.charAt(1) == 'e')
+      {
+        Serial.print(backlightMode % 3);
+        Serial.print(',');
+        Serial.print(defaultBrightness);
+        Serial.print(',');
+        Serial.print(isLightOn);
       }
       if (str.charAt(1) == 'd')
       {
@@ -183,14 +192,21 @@ void loop()
       {
         String brightnessStr = str.substring(2);
         int brightnessInt = brightnessStr.toInt();
+
         if (!(brightnessInt <= 0 || brightnessInt > 255))
         {
           defaultBrightness = brightnessInt;
           analogWrite(9, defaultBrightness);
-          lcd.clear();
-          lcd.print("Brightness:");
+          lcd.setCursor(0, 0);
+
+          lcd.print("Brightness:     ");
           lcd.setCursor(0, 1);
-          lcd.print(defaultBrightness);
+          String printString = String(defaultBrightness);
+          for (int i = 0; i < 16 - String(defaultBrightness).length(); i++)
+          {
+            printString += " ";
+          }
+          lcd.print(printString);
         }
       }
     }
@@ -280,45 +296,28 @@ void defaultLcd()
   if (currentNotification == "")
   {
 
-    if (isLightOn)
+    lcd.setCursor(0, 1);
+    lcd.print(daysOfWeek[clock.getDoW() - 1]);
+    lcd.setCursor(10, 1);
+    lcd.write(4);
+    if (digitalRead(btpin) == LOW)
     {
-      lcd.setCursor(0, 1);
-      lcd.print(daysOfWeek[clock.getDoW() - 1]);
-      lcd.setCursor(10, 1);
-      lcd.write(4);
-      if (digitalRead(btpin) == HIGH)
-      {
-        lcd.write(5);
-      }
-      else
-      {
-        lcd.write(6);
-      }
-
-      lcd.print(' ');
-      lcd.write(3);
-      lcd.print(' ');
-      lcd.write(1);
+      lcd.write(5);
     }
-
     else
     {
+      lcd.write(6);
+    }
 
-      lcd.setCursor(0, 1);
-      lcd.print(daysOfWeek[clock.getDoW() - 1]);
-      lcd.setCursor(10, 1);
-      lcd.write(4);
-      if (digitalRead(btpin) == HIGH)
-      {
-        lcd.write(5);
-      }
-      else
-      {
-        lcd.write(6);
-      }
-      lcd.print(' ');
-      lcd.write(3);
-      lcd.print(' ');
+    lcd.print(' ');
+    lcd.write(3);
+    lcd.print(' ');
+    if (isLightOn)
+    {
+      lcd.write(1);
+    }
+    else
+    {
       lcd.write(2);
     }
   }
